@@ -357,6 +357,7 @@ let teamRosters=  [];   // string[][]
 let teamNames=    [];   // string[]
 let teamCaps=     [];   // number[]  (capacity per team)
 let pendingIdx=   -1;   // team assigned to current reveal
+let currentId=    null; // id of loaded saved tournament (null if unsaved)
 
 const $= id=>document.getElementById(id);
 const appEl=      $('appEl');
@@ -395,6 +396,16 @@ function toast(msg){toastEl.textContent=msg;toastEl.classList.add('show');setTim
 function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=0|Math.random()*(i+1);[b[i],b[j]]=[b[j],b[i]];}return b;}
 function setPhase(p){phase=p;appEl.dataset.phase=p;}
 
+function resetToSetup(){
+  tourneyEl.value='';
+  drawn=[]; teamRosters=[]; teamNames=[]; teamCaps=[]; allTickets=[]; ticketPool=[];
+  teamsGrid.innerHTML=''; poolTickets.innerHTML='';
+  drawnNum.textContent='0'; totalNum.textContent='0'; progressFill.style.width='0';
+  completeBanner.style.display='none'; saveBtn.disabled=true; currentId=null;
+  headerStatus.textContent='Configurar torneo';
+  setPhase('setup'); updatePreview();
+}
+
 /* setup preview */
 function updatePreview(){
   const N=parseInt(totalEl.value)||0, T=parseInt(numTEl.value)||0;
@@ -420,7 +431,7 @@ function initTombola(){
   allTickets=shuffle(raw);
   ticketPool=[...allTickets];
   teamRosters=Array.from({length:T},()=>[]);
-  drawn=[];
+  drawn=[]; currentId=null;
   setPhase('drawing');
   completeBanner.style.display='none';
   drawInput.value=''; btnSortear.disabled=true; saveBtn.disabled=true;
@@ -583,7 +594,7 @@ function loadTournament(id){
   completeBanner.style.display=t.isComplete?'block':'none';
   if(t.isComplete) completeSub.textContent=`${cfg.N} jugadores distribuidos en ${cfg.T} equipos`;
   renderTeams(); renderPool(); updateCounter();
-  drawInput.value=''; btnSortear.disabled=true;
+  drawInput.value=''; btnSortear.disabled=true; currentId=id;
   window.scrollTo({top:0,behavior:'smooth'});
   toast(`"${t.name}" cargado`);
 }
@@ -593,6 +604,7 @@ function deleteTournament(id){
   if(!confirm(`¿Eliminar "${target.name}"?`))return;
   localStorage.setItem(STORE,JSON.stringify(saved.filter(x=>x.id!==id)));
   renderSaved(); toast('Torneo eliminado');
+  if(id===currentId) resetToSetup();
 }
 
 function renderSaved(){
@@ -619,7 +631,7 @@ btnSaveFinal.addEventListener('click',saveTournament);
 saveBtn.addEventListener('click',saveTournament);
 btnNewT.addEventListener('click',()=>{
   if(!confirm('¿Iniciar un nuevo torneo? Guarda primero si no quieres perder el sorteo actual.'))return;
-  setPhase('setup'); completeBanner.style.display='none'; saveBtn.disabled=true; updatePreview();
+  resetToSetup();
 });
 savedList.addEventListener('click',e=>{
   const l=e.target.closest('.btn-load'), d=e.target.closest('.btn-del');
