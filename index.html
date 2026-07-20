@@ -406,7 +406,24 @@ body {
 .tc-header { padding: 11px 13px 9px; }
 .tc-stripe { height: 3px; border-radius: 2px; margin-bottom: 9px; }
 .tc-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--txt-faint); margin-bottom: 1px; }
-.tc-name { font-size: 16px; font-weight: 900; text-transform: uppercase; letter-spacing: .03em; line-height: 1.1; margin-bottom: 6px; }
+.tc-name { font-size: 16px; font-weight: 900; text-transform: uppercase; letter-spacing: .03em; line-height: 1.1; margin-bottom: 6px; cursor: text; }
+.tc-name:hover { text-decoration: underline; text-decoration-style: dashed; text-underline-offset: 3px; }
+.tc-name-input {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--em);
+  color: inherit;
+  font-family: var(--font);
+  font-size: 16px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  width: 100%;
+  outline: none;
+  padding: 0 0 2px;
+  margin-bottom: 6px;
+  display: block;
+}
 .tc-badge {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 10px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
@@ -752,7 +769,32 @@ function renderTeams(teams, teamSize) {
       </div>
       <div class="tc-slots">${slots}</div>
     `;
+    card.querySelector('.tc-name').addEventListener('click', function() {
+      makeNameEditable(this);
+    });
     teamsGrid.appendChild(card);
+  });
+}
+
+function makeNameEditable(el) {
+  const original = el.textContent;
+  const color    = el.style.color;
+  const input    = document.createElement('input');
+  input.type      = 'text';
+  input.value     = original;
+  input.className = 'tc-name-input';
+  input.style.color = color;
+  el.replaceWith(input);
+  input.focus();
+  input.select();
+  function commit() {
+    el.textContent = input.value.trim() || original;
+    input.replaceWith(el);
+  }
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter')  { input.blur(); }
+    if (e.key === 'Escape') { input.value = original; input.blur(); }
   });
 }
 
