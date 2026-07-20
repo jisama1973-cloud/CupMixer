@@ -724,9 +724,23 @@ function drawBGroups(){
   const idxs=shuffle(Array.from({length:cfg.T},(_,i)=>i));
   const half=Math.ceil(cfg.T/2);
   bGroups=[idxs.slice(0,half),idxs.slice(half)];
-  bMatches=[];
-  bGroups[0].forEach(h=>bGroups[1].forEach(a=>bMatches.push({h,a,hg:null,ag:null,played:false})));
+  bMatches=scheduleMatches(bGroups[0],bGroups[1]);
   bPhase='groups'; renderBracket();
+}
+
+function scheduleMatches(g1,g2){
+  // Build all cross-group pairings
+  const all=[];
+  g1.forEach(h=>g2.forEach(a=>all.push({h,a,hg:null,ag:null,played:false})));
+  // Greedy: pick next match where neither team appeared in the previous match
+  const result=[], remaining=[...all];
+  let prev=null;
+  while(remaining.length){
+    const idx=prev===null?0:remaining.findIndex(m=>m.h!==prev.h&&m.a!==prev.a&&m.h!==prev.a&&m.a!==prev.h);
+    const pick=remaining.splice(idx===-1?0:idx,1)[0];
+    result.push(pick); prev=pick;
+  }
+  return result;
 }
 
 function calcBStandings(gIdx){
@@ -743,7 +757,7 @@ function calcBStandings(gIdx){
 }
 
 function registerBMatch(idx){
-  const hg=parseInt($(`bm-h-${idx}`).value),ag=parseInt($(`bm-a-${idx}`).value);
+  const hg=parseInt($(`bm-${idx}-h`).value),ag=parseInt($(`bm-${idx}-a`).value);
   if(isNaN(hg)||isNaN(ag)||hg<0||ag<0){toast('Ingresa marcadores válidos');return;}
   bMatches[idx]={...bMatches[idx],hg,ag,played:true};
   renderBracket();
@@ -759,7 +773,7 @@ function advanceBToSemis(){
 }
 
 function registerBSemi(idx){
-  const hg=parseInt($(`bs-h-${idx}`).value),ag=parseInt($(`bs-a-${idx}`).value);
+  const hg=parseInt($(`bs-${idx}-h`).value),ag=parseInt($(`bs-${idx}-a`).value);
   if(isNaN(hg)||isNaN(ag)||hg<0||ag<0){toast('Ingresa marcadores válidos');return;}
   if(hg===ag){toast('No puede haber empate en semifinal');return;}
   bSemis[idx]={...bSemis[idx],hg,ag,played:true};
